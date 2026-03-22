@@ -478,9 +478,50 @@ body {
   color: var(--text-mid); border-radius: 9px; font-family: 'Space Mono', monospace;
   font-size: 12px; cursor: pointer;
 }
+
+/* ══════════════ SLEEP SCREEN ══════════════ */
+.sleep-screen {
+  position: fixed; inset: 0; z-index: 900;
+  background: #080604;
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 0;
+}
+.sleep-screen.active { display: -webkit-flex; display: flex; }
+.sleep-time {
+  font-size: 72px; font-weight: 700; letter-spacing: -2px;
+  color: rgba(240,210,160,0.18);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.sleep-date-str {
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(240,210,160,0.1);
+  margin-bottom: 48px;
+}
+.sleep-icon { font-size: 28px; margin-bottom: 16px; opacity: 0.25; }
+.sleep-label {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(240,210,160,0.18);
+  margin-bottom: 6px;
+}
+.sleep-countdown {
+  font-size: 22px; font-weight: 700;
+  color: rgba(240,210,160,0.22);
+  letter-spacing: 0.04em;
+}
 </style>
 </head>
 <body>
+
+<!-- ══ SLEEP SCREEN ══ -->
+<div class="sleep-screen" id="sleepScreen">
+  <div class="sleep-time" id="sleepClock"></div>
+  <div class="sleep-date-str" id="sleepDateStr"></div>
+  <div class="sleep-icon">🌙</div>
+  <div class="sleep-label">Dashboard wakes at</div>
+  <div class="sleep-countdown" id="sleepCountdown"></div>
+</div>
 
 <!-- ══ SETUP WIZARD ══ -->
 <div class="setup-overlay" id="setupOverlay">
@@ -990,9 +1031,30 @@ function showV(v) {
   var sv = document.getElementById('streaksView');
   var dv = document.getElementById('dataView');
 
-  gv.style.display = v === 'grid' ? 'flex' : 'none';
-  sv.classList.toggle('view-active', v === 'streaks');
-  dv.classList.toggle('view-active', v === 'data');
+  // Reset all to hidden
+  gv.style.display = 'none';
+  sv.style.display = 'none';
+  dv.style.display = 'none';
+  sv.style.height = '';
+  dv.style.height = '';
+
+  var hdrH = document.querySelector('.header').offsetHeight || 46;
+
+  if (v === 'grid') {
+    gv.style.display = '-webkit-flex';
+    gv.style.display = 'flex';
+  } else if (v === 'streaks') {
+    sv.style.display = 'block';
+    sv.style.height = (window.innerHeight - hdrH) + 'px';
+    sv.style.overflowY = 'auto';
+    sv.style.webkitOverflowScrolling = 'touch';
+    renderStr();
+  } else if (v === 'data') {
+    dv.style.display = 'block';
+    dv.style.height = (window.innerHeight - hdrH) + 'px';
+    dv.style.overflowY = 'auto';
+    dv.style.webkitOverflowScrolling = 'touch';
+  }
 
   document.querySelectorAll('.tab-btn').forEach(function(b, i) {
     b.classList.toggle('active',
@@ -1001,8 +1063,6 @@ function showV(v) {
       (i === 2 && v === 'data')
     );
   });
-
-  if (v === 'streaks') renderStr();
 }
 
 /* ─── Data export / import ─── */
@@ -1064,6 +1124,60 @@ function dismissBanner() {
   localStorage.setItem('ac_banner_dismissed', '1');
 }
 
+/* ─── Sleep / Wake Gate ─── */
+var WAKE_HOUR  = 7;   // 7:00 AM
+var SLEEP_HOUR = 21;  // 9:00 PM
+var sleepTimer = null;
+
+function isAwakeHour() {
+  var h = new Date().getHours();
+  return h >= WAKE_HOUR && h < SLEEP_HOUR;
+}
+
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+function fmtClock(d) {
+  var h = d.getHours(), m = d.getMinutes();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  var h12 = h % 12 || 12;
+  return h12 + ':' + pad2(m) + ' ' + ampm;
+}
+
+function minsUntilWake() {
+  var now = new Date();
+  var wake = new Date(now);
+  wake.setHours(WAKE_HOUR, 0, 0, 0);
+  if (now >= wake) wake.setDate(wake.getDate() + 1); // already past today's wake
+  var diff = Math.round((wake - now) / 60000);
+  var hh = Math.floor(diff / 60);
+  var mm = diff % 60;
+  return hh + 'h ' + pad2(mm) + 'm';
+}
+
+function tickSleep() {
+  var now = new Date();
+  document.getElementById('sleepClock').textContent = fmtClock(now);
+  document.getElementById('sleepDateStr').textContent =
+    DAYS_LONG[now.getDay()] + ', ' + MONTHS_LONG[now.getMonth()] + ' ' + now.getDate();
+  document.getElementById('sleepCountdown').textContent = minsUntilWake();
+}
+
+function enterSleep() {
+  document.getElementById('sleepScreen').classList.add('active');
+  tickSleep();
+  sleepTimer = setInterval(function() {
+    tickSleep();
+    if (isAwakeHour()) exitSleep();
+  }, 30000); // check every 30s
+}
+
+function exitSleep() {
+  clearInterval(sleepTimer);
+  document.getElementById('sleepScreen').classList.remove('active');
+  if (!state.setupDone) showSetup();
+  else renderGrid();
+}
+
 /* ─── Init ─── */
 var loaded = loadState();
 state = loaded || freshState();
@@ -1072,7 +1186,9 @@ document.getElementById('todayLabel').textContent = fmtFull(td());
 
 initBanner();
 
-if (!state.setupDone) {
+if (!isAwakeHour()) {
+  enterSleep();
+} else if (!state.setupDone) {
   showSetup();
 } else {
   renderGrid();
