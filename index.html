@@ -12,23 +12,23 @@
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 :root {
-  --bg:          #090c10;
-  --surface:     #111620;
-  --surface2:    #172030;
-  --border:      #1e2a38;
-  --border2:     #273545;
-  --text:        #d8e6f2;
-  --text-mid:    #7a9ab8;
-  --text-dim:    #445566;
-  --accent:      #3d9eff;
-  --accent-glow: rgba(61,158,255,0.15);
-  --green:       #2fd46c;
-  --green-bg:    rgba(47,212,108,0.12);
-  --red:         #ff4f4f;
-  --red-bg:      rgba(255,79,79,0.12);
-  --orange:      #f0a020;
-  --orange-bg:   rgba(240,160,32,0.12);
-  --today-col:   rgba(61,158,255,0.06);
+  --bg:          #0d0b08;
+  --surface:     #181410;
+  --surface2:    #211c15;
+  --border:      #2e2518;
+  --border2:     #3d3222;
+  --text:        #f0e6d0;
+  --text-mid:    #a08060;
+  --text-dim:    #5a4830;
+  --accent:      #e8a030;
+  --accent-glow: rgba(232,160,48,0.15);
+  --green:       #3ec96a;
+  --green-bg:    rgba(62,201,106,0.12);
+  --red:         #f05050;
+  --red-bg:      rgba(240,80,80,0.12);
+  --orange:      #f07820;
+  --orange-bg:   rgba(240,120,32,0.12);
+  --today-col:   rgba(232,160,48,0.07);
 
   /* Layout constants — tweak here to resize everything */
   --task-w:   190px;
@@ -406,6 +406,13 @@ body {
 .streaks-view {
   display: none; overflow-y: auto; padding: 14px;
   -webkit-overflow-scrolling: touch;
+}
+.streaks-view.view-active,
+.data-view.view-active {
+  display: block;
+  -webkit-flex: 1; flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 .s-card {
   background: var(--surface); border: 1px solid var(--border);
@@ -984,12 +991,8 @@ function showV(v) {
   var dv = document.getElementById('dataView');
 
   gv.style.display = v === 'grid' ? 'flex' : 'none';
-
-  /* Streaks and data need flex:1 to fill height when visible */
-  sv.style.display = v === 'streaks' ? 'block' : 'none';
-  sv.style.flex    = v === 'streaks' ? '1' : '';
-  dv.style.display = v === 'data' ? 'block' : 'none';
-  dv.style.flex    = v === 'data' ? '1' : '';
+  sv.classList.toggle('view-active', v === 'streaks');
+  dv.classList.toggle('view-active', v === 'data');
 
   document.querySelectorAll('.tab-btn').forEach(function(b, i) {
     b.classList.toggle('active',
