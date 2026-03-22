@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Autocorrection Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0e1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --text-dim: #7d8590; --accent: #58a6ff;
+    --green: #2ea043; --green-bg: #2ea04322;
+    --red: #f85149; --red-bg: #f8514922;
+    --orange: #d29922; --orange-bg: #d2992233;
+    --today-glow: #58a6ff18;
+  }
+  body { font-family: 'Space Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  .header {
+    padding: 14px 16px 10px; position: sticky; top: 0;
+    background: var(--bg); z-index: 100; border-bottom: 1px solid var(--border);
+  }
+  .header h1 { font-size: 17px; font-weight: 700; }
+  .header-sub { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+  .test-badge {
+    display: inline-block; background: var(--orange-bg); color: var(--orange);
+    font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    margin-left: 6px; letter-spacing: 0.5px; vertical-align: middle;
+  }
+  .nav-row { display: flex; gap: 8px; margin-top: 10px; }
+  .nav-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    padding: 5px 13px; border-radius: 20px; font-size: 11px;
+    font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* TIME NAV */
+  .time-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
+  }
+  .time-nav-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    width: 34px; height: 34px; border-radius: 50%; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-family: 'Space Mono', monospace;
+  }
+  .time-nav-btn:active { background: var(--border); }
+  .time-nav-label { font-size: 11px; font-weight: 700; }
+  .time-nav-today {
+    background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    padding: 3px 10px; border-radius: 12px; font-size: 9px;
+    font-family: 'Space Mono', monospace; cursor: pointer; font-weight: 700;
+  }
+  .time-nav-today:active { background: var(--accent); color: #fff; }
+
+  /* LEGEND */
+  .legend {
+    display: flex; gap: 8px; padding: 7px 16px;
+    overflow-x: auto; border-bottom: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 8px; color: var(--text-dim); white-space: nowrap; }
+  .legend-dot {
+    width: 11px; height: 11px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .legend-dot.l-nd { background: transparent; }
+  .legend-dot.l-nd .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
+  .legend-dot.l-due { background: var(--surface); border: 1.5px solid var(--accent); }
+  .legend-dot.l-done { background: var(--green); }
+  .legend-dot.l-miss { background: var(--red-bg); border: 1.5px solid var(--red); }
+  .legend-dot.l-over { background: var(--orange-bg); border: 1.5px solid var(--orange); }
+  .legend-dot.l-next { background: transparent; border: 2px solid var(--accent); opacity: 0.7; }
+  .legend-dot.l-fut { background: transparent; border: 1.5px dashed var(--border); }
+
+  /* GRID */
+  .grid-container { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 6px 0; }
+  .grid-table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+  .grid-table th, .grid-table td { text-align: center; padding: 0; }
+  .date-cell {
+    padding: 6px 3px 8px; font-size: 10px; color: var(--text-dim);
+    font-weight: 400; min-width: 46px;
+  }
+  .date-cell .day-name { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .date-cell .day-num { display: block; font-size: 14px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .date-cell.is-today .day-num {
+    background: var(--accent); color: #fff;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .date-cell.is-past { opacity: 0.55; }
+
+  .task-name-cell {
+    position: sticky; left: 0; background: var(--bg); z-index: 10;
+    text-align: left; padding: 7px 10px;
+    min-width: 110px; max-width: 130px;
+    border-right: 1px solid var(--border); cursor: pointer;
+  }
+  .task-name-cell:active { background: var(--surface); }
+  .task-label { font-size: 10px; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-freq { font-size: 8px; color: var(--text-dim); margin-top: 1px; display: block; }
+  .streak-badge {
+    display: inline-block; font-size: 8px; font-weight: 700;
+    padding: 1px 5px; border-radius: 6px; margin-top: 3px;
+  }
+  .streak-badge.on { background: var(--green-bg); color: var(--green); }
+
+  .grid-cell { padding: 3px; min-width: 46px; height: 44px; vertical-align: middle; }
+  .grid-cell.today-col { background: var(--today-glow); }
+
+  .cell-inner {
+    width: 30px; height: 30px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto; cursor: pointer; transition: all 0.15s ease;
+  }
+  .cell-inner.not-due { background: transparent; cursor: default; }
+  .cell-inner.not-due .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
+  .cell-inner.due { background: var(--surface); border: 2px solid var(--accent); }
+  .cell-inner.due:active { transform: scale(0.9); }
+  .cell-inner.done { background: var(--green); border: 2px solid var(--green); }
+  .cell-inner.done svg { width: 15px; height: 15px; }
+  .cell-inner.missed { background: var(--red-bg); border: 2px solid var(--red); }
+  .cell-inner.carry-overdue {
+    background: var(--orange-bg); border: 2px solid var(--orange);
+    animation: pulse-orange 2.5s ease-in-out infinite;
+  }
+  .cell-inner.next-due {
+    background: transparent; border: 2px solid var(--accent);
+    box-shadow: 0 0 8px var(--accent), 0 0 3px var(--accent);
+    cursor: default;
+  }
+  .cell-inner.future-due { background: transparent; border: 2px dashed var(--border); cursor: default; opacity: 0.4; }
+  .cell-inner.past-done { background: var(--green); border: 2px solid var(--green); opacity: 0.55; }
+
+  @keyframes pulse-orange {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 0 4px var(--orange-bg); }
+  }
+
+  /* TASK DETAIL SHEET */
+  .detail-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .detail-overlay.open { opacity: 1; pointer-events: auto; }
+  .detail-sheet {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0; width: 100%; max-width: 500px;
+    max-height: 75vh; overflow-y: auto; padding: 20px 18px 30px;
+    transform: translateY(100%); transition: transform 0.25s ease;
+  }
+  .detail-overlay.open .detail-sheet { transform: translateY(0); }
+  .detail-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+  .detail-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+  .detail-section { margin-bottom: 14px; }
+  .detail-section-label {
+    font-size: 9px; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;
+  }
+  .detail-section-text { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+  .detail-close {
+    width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; font-family: 'Space Mono', monospace;
+    font-size: 12px; cursor: pointer; margin-top: 8px;
+  }
+
+  /* STREAKS */
+  .streaks-view { padding: 14px 16px; display: none; }
+  .streak-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; margin-bottom: 10px;
+  }
+  .streak-card-title { font-size: 12px; font-weight: 700; }
+  .streak-card-row { display: flex; justify-content: space-between; margin-top: 10px; }
+  .streak-stat { text-align: center; }
+  .streak-stat .num { font-size: 20px; font-weight: 700; }
+  .streak-stat .label { font-size: 8px; color: var(--text-dim); margin-top: 2px; }
+  .streak-stat .num.green { color: var(--green); }
+  .streak-stat .num.orange { color: var(--orange); }
+  .heat-strip { display: flex; gap: 2px; margin-top: 10px; }
+  .heat-strip .heat-day { width: 9px; height: 9px; border-radius: 2px; background: var(--border); }
+  .heat-strip .heat-day.done { background: var(--green); }
+  .heat-strip .heat-day.missed { background: var(--red); }
+  .heat-strip .heat-day.not-due { background: var(--border); opacity: 0.3; }
+
+  /* DATA */
+  .data-view { padding: 14px 16px; display: none; }
+  .data-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 12px 14px; border-radius: 10px; font-size: 11px;
+    font-family: 'Space Mono', monospace; cursor: pointer;
+    text-align: left; width: 100%; margin-bottom: 10px;
+  }
+  .data-btn:active { background: var(--border); }
+  .data-btn .sub { font-size: 9px; color: var(--text-dim); margin-top: 3px; display: block; }
+  .data-textarea {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Space Mono', monospace; font-size: 10px;
+    padding: 10px; border-radius: 8px; margin-bottom: 10px; min-height: 90px; display: none;
+  }
+  .spacer { height: 50px; }
+</style>
+</head>
+<body>
+
+<!-- TASK DETAIL SHEET -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-sheet" id="detailSheet">
+    <div class="detail-handle"></div>
+    <div class="detail-title" id="detailTitle"></div>
+    <div id="detailContent"></div>
+    <button class="detail-close" onclick="closeDetailForce()">Close</button>
+  </div>
+</div>
+
+<div class="header">
+  <h1>// autocorrection <span class="test-badge">TEST</span></h1>
+  <div class="header-sub" id="todayLabel"></div>
+  <div class="nav-row">
+    <button class="nav-btn active" onclick="showView('grid')">Grid</button>
+    <button class="nav-btn" onclick="showView('streaks')">Streaks</button>
+    <button class="nav-btn" onclick="showView('data')">Data</button>
+  </div>
+</div>
+
+<div id="gridView">
+  <div class="time-nav">
+    <button class="time-nav-btn" onclick="shiftView(-7)">&larr;</button>
+    <span class="time-nav-label" id="rangeLabel"></span>
+    <button class="time-nav-today" onclick="goToday()">TODAY</button>
+    <button class="time-nav-btn" onclick="shiftView(7)">&rarr;</button>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot l-nd"><div class="dot"></div></div>Skip</div>
+    <div class="legend-item"><div class="legend-dot l-due"></div>Due</div>
+    <div class="legend-item"><div class="legend-dot l-done"></div>Done</div>
+    <div class="legend-item"><div class="legend-dot l-miss"></div>Missed</div>
+    <div class="legend-item"><div class="legend-dot l-over"></div>Do it!</div>
+    <div class="legend-item"><div class="legend-dot l-next"></div>Next</div>
+    <div class="legend-item"><div class="legend-dot l-fut"></div>Later</div>
+  </div>
+  <div class="grid-container">
+    <table class="grid-table" id="gridTable"></table>
+  </div>
+</div>
+
+<div id="streaksView" class="streaks-view"></div>
+
+<div id="dataView" class="data-view">
+  <button class="data-btn" onclick="exportJSON()">Export JSON<span class="sub">Full backup - copy to clipboard</span></button>
+  <button class="data-btn" onclick="exportCSV()">Export CSV<span class="sub">Spreadsheet-ready for analysis</span></button>
+  <button class="data-btn" onclick="showImport()">Import JSON<span class="sub">Restore from backup</span></button>
+  <textarea class="data-textarea" id="importArea" placeholder="Paste JSON here..."></textarea>
+  <button class="data-btn" id="importBtn" style="display:none;background:var(--green);border-color:var(--green)" onclick="importData()">Confirm Import</button>
+  <button class="data-btn" onclick="resetData()" style="border-color:var(--red);color:var(--red)">Reset All<span class="sub">Clear everything. Cannot be undone.</span></button>
+</div>
+
+<div class="spacer"></div>
+
+<script>
+// =============================================
+// TEST: set to null for real date
+var TEST_TODAY = '2026-03-18';
+// =============================================
+
+// Clear ALL old localStorage versions to start clean
+localStorage.removeItem('autocorrect_data_v1');
+localStorage.removeItem('autocorrect_v2');
+localStorage.removeItem('autocorrect_v3');
+localStorage.removeItem('autocorrect_v4');
+localStorage.removeItem('autocorrect_v5');
+
+var LOOPS = [
+  { id: 'laundry', name: 'Wash Clothes', freq: 'Every 2 days', cycleDays: 2, icon: '&#x1F9FA;',
+    goal: 'Wash every second day. Every dry load gets folded and put away before the next load goes on.',
+    guardRail: "Clothes don't stay on the rack or bed for more than one day.",
+    guardBreak: 'Dry clothes sitting on rack or bed for 2+ days.',
+    ifThen: "If clothes are dry and it's 9 PM, stop and put them away (10 min). Next wash forces you to clear the rack.",
+    correction: "If you can't put them away now, they go into a single designated basket — not the bed."
+  },
+  { id: 'clothes', name: 'Clothes to Wardrobe', freq: 'Daily', cycleDays: 1, icon: '&#x1F455;',
+    goal: 'Every night after showering, dirty clothes to laundry room, not-dirty clothes to designated spot.',
+    guardRail: 'No clothes accumulate in the bathroom or on the bed overnight.',
+    guardBreak: 'Clothes sitting in bathroom or on bed for more than one night.',
+    ifThen: 'After shower, get dressed for bed. Before getting into bed: dirty to laundry room, not-dirty to spot. 2 minutes.',
+    correction: 'If too tired, dirty clothes go into basket by bedroom door — move them first thing in the morning.'
+  },
+  { id: 'trash', name: 'Trash Out', freq: 'Daily', cycleDays: 1, icon: '&#x1F5D1;',
+    goal: 'Take trash out every day when leaving the house. One bag per day, no accumulation.',
+    guardRail: 'Trash goes out minimum on MWF (gym days). Never sits more than 2 days.',
+    guardBreak: "Trash hasn't gone out for 3+ days.",
+    ifThen: 'Before leaving for gym on MWF, grab trash on your way out. Other days, take it when leaving.',
+    correction: "If rushing and forgot, it goes out when you get home — don't let it roll to next day."
+  },
+  { id: 'litter', name: 'Change Litter', freq: 'Every 3 days', cycleDays: 3, icon: '&#x1F431;',
+    goal: 'Full litter change every 3 days.',
+    guardRail: 'Never goes longer than 4 days.',
+    guardBreak: '5+ days without a change.',
+    ifThen: 'Every 3 days, before leaving the house, change the litter. 5 minutes.',
+    correction: 'If you miss day 3, it gets done on day 4 — no exceptions.'
+  },
+  { id: 'vacuum', name: 'Vacuum', freq: '2x / week', cycleDays: 3, icon: '&#x1F9F9;',
+    goal: 'Vacuum twice per week.',
+    guardRail: 'Vacuum at least once per week.',
+    guardBreak: 'A full week passes with no vacuum.',
+    ifThen: 'Pick 2 specific days. If done together with dusting, 15 min instead of 30.',
+    correction: 'If the scheduled day gets missed, it must happen the next day.'
+  },
+  { id: 'dust', name: 'Dusting', freq: 'Weekly', cycleDays: 7, icon: '&#x2728;',
+    goal: 'Dust once per week.',
+    guardRail: 'At least once every two weeks.',
+    guardBreak: '2 weeks pass with no dusting.',
+    ifThen: 'Pick one specific day. Dashboard shows it.',
+    correction: 'If scheduled day gets missed, it must happen the next day.'
+  }
+];
+
+var SK = 'autocorrect_v6';
+var viewOffset = 0;
+
+// Always start with clean state for this version
+var state = { anchors: {}, checks: {} };
+for (var i = 0; i < LOOPS.length; i++) state.anchors[LOOPS[i].id] = '2026-03-16';
+
+function today() { return TEST_TODAY || new Date().toISOString().split('T')[0]; }
+function addD(ds, n) { var d = new Date(ds+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+function diffD(a, b) { return Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00')) / 86400000); }
+function fmtDay(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en',{weekday:'short'}).toUpperCase(); }
+function fmtNum(ds) { return new Date(ds+'T12:00:00').getDate(); }
+function fmtMD(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en',{month:'short',day:'numeric'}); }
+function fmtFull(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); }
+
+function save() { localStorage.setItem(SK, JSON.stringify(state)); }
+
+// Get the effective anchor: the LAST completion date before or on asOf, or the initial anchor
+function getEffAnchor(loop, asOf) {
+  var initial = state.anchors[loop.id];
+  var latest = initial;
+  var pfx = loop.id + '_';
+  for (var key in state.checks) {
+    if (key.indexOf(pfx) === 0 && state.checks[key]) {
+      var d = key.substring(pfx.length);
+      if (d <= asOf && d > latest) latest = d;
+    }
+  }
+  return latest;
+}
+
+// Is this date a scheduled due date?
+function isDue(loop, ds) {
+  var anchor = getEffAnchor(loop, ds);
+  var diff = diffD(anchor, ds);
+  if (diff < 0) return false;
+  return diff % loop.cycleDays === 0;
+}
+
+function isChecked(lid, ds) { return state.checks[lid + '_' + ds] === true; }
+
+// Walk back to find the previous due date before ds
+function prevDue(loop, ds) {
+  for (var i = 1; i <= loop.cycleDays * 3; i++) {
+    var d = addD(ds, -i);
+    if (isDue(loop, d)) return d;
+  }
+  return null;
+}
+
+// Is this a carry-forward overdue day? (not due itself, but previous due was missed)
+function isCarry(loop, ds) {
+  var t = today();
+  if (ds > t) return false;
+  // Must not be a due date itself
+  if (isDue(loop, ds)) return false;
+  // Find previous due date
+  var prev = prevDue(loop, ds);
+  if (!prev) return false;
+  // If previous due was missed, this is carry-overdue
+  return !isChecked(loop.id, prev);
+}
+
+// Find next due date AFTER today
+function nextDueDate(loop) {
+  var t = today();
+  for (var i = 1; i <= 30; i++) {
+    var d = addD(t, i);
+    if (isDue(loop, d)) return d;
+  }
+  return null;
+}
+
+function doCheck(lid, ds) {
+  state.checks[lid + '_' + ds] = !state.checks[lid + '_' + ds];
+  save();
+  renderGrid();
+}
+
+function calcStreak(loop) {
+  var t = today(), cur = 0, lon = 0, tot = 0, td = 0, tmp = 0;
+  for (var i = 90; i >= 0; i--) {
+    var d = addD(t, -i);
+    if (!isDue(loop, d)) continue;
+    td++;
+    if (isChecked(loop.id, d)) { tot++; tmp++; if (tmp > lon) lon = tmp; }
+    else { tmp = 0; }
+  }
+  cur = 0;
+  for (var i = 0; i <= 90; i++) {
+    var d = addD(t, -i);
+    if (!isDue(loop, d)) continue;
+    if (d === t && !isChecked(loop.id, d)) continue;
+    if (isChecked(loop.id, d)) cur++; else break;
+  }
+  var rate = td > 0 ? Math.round((tot / td) * 100) : 0;
+  return { current: cur, longest: lon, total: tot, totalDue: td, rate: rate };
+}
+
+// --- GRID ---
+function renderGrid() {
+  var t = today();
+  var startDay = addD(t, viewOffset - 2);
+  var days = [];
+  for (var i = 0; i < 10; i++) days.push(addD(startDay, i));
+
+  document.getElementById('rangeLabel').textContent = fmtMD(days[0]) + ' \u2014 ' + fmtMD(days[days.length - 1]);
+
+  // Pre-compute next due for glow
+  var nextDues = {};
+  for (var li = 0; li < LOOPS.length; li++) {
+    var nd = nextDueDate(LOOPS[li]);
+    if (nd) nextDues[LOOPS[li].id] = nd;
+  }
+
+  var h = '<thead><tr><th class="task-name-cell" style="border-bottom:1px solid var(--border)"></th>';
+  for (var di = 0; di < days.length; di++) {
+    var d = days[di], cls = 'date-cell';
+    if (d === t) cls += ' is-today';
+    else if (d < t) cls += ' is-past';
+    h += '<th class="' + cls + '"><span class="day-name">' + fmtDay(d) + '</span><span class="day-num">' + fmtNum(d) + '</span></th>';
+  }
+  h += '</tr></thead><tbody>';
+
+  for (var li = 0; li < LOOPS.length; li++) {
+    var loop = LOOPS[li], s = calcStreak(loop);
+    h += '<tr><td class="task-name-cell" onclick="openDetail(\'' + loop.id + '\')">';
+    h += '<span class="task-label">' + loop.icon + ' ' + loop.name + '</span>';
+    h += '<span class="task-freq">' + loop.freq + '</span>';
+    if (s.current > 0) h += '<span class="streak-badge on">&#x1F525; ' + s.current + '</span>';
+    h += '</td>';
+
+    for (var di = 0; di < days.length; di++) {
+      var d = days[di];
+      var isT = (d === t);
+      var isFut = (d > t);
+      var isPast = (d < t);
+      var due = isDue(loop, d);
+      var checked = isChecked(loop.id, d);
+      var carry = isCarry(loop, d);
+      var isNext = (nextDues[loop.id] === d);
+
+      h += '<td class="grid-cell' + (isT ? ' today-col' : '') + '">';
+
+      if (checked) {
+        // DONE
+        var cls2 = isPast ? 'past-done' : 'done';
+        h += '<div class="cell-inner ' + cls2 + '" onclick="doCheck(\'' + loop.id + '\',\'' + d + '\')">';
+        h += '<svg fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+      } else if (due && isPast) {
+        // MISSED: due date in the past, not done = RED
+        h += '<div class="cell-inner missed" onclick="doCheck(\'' + loop.id + '\',\'' + d + '\')">';
+        h += '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--red)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg></div>';
+      } else if (carry) {
+        // CARRY-FORWARD: not a due date, but previous due was missed = ORANGE
+        h += '<div class="cell-inner carry-overdue" onclick="doCheck(\'' + loop.id + '\',\'' + d + '\')">';
+        h += '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--orange)" stroke-width="2.5"><path d="M12 9v4" stroke-linecap="round"/><circle cx="12" cy="16" r="0.5" fill="var(--orange)" stroke="none"/></svg></div>';
+      } else if (due && isT) {
+        // DUE TODAY = BLUE
+        h += '<div class="cell-inner due" onclick="doCheck(\'' + loop.id + '\',\'' + d + '\')"></div>';
+      } else if (isNext && isFut) {
+        // NEXT DUE = GLOWING BLUE
+        h += '<div class="cell-inner next-due"></div>';
+      } else if (due && isFut) {
+        // FUTURE DUE = DASHED
+        h += '<div class="cell-inner future-due"></div>';
+      } else {
+        // NOT DUE = DOT
+        h += '<div class="cell-inner not-due"><div class="dot"></div></div>';
+      }
+
+      h += '</td>';
+    }
+    h += '</tr>';
+  }
+  h += '</tbody>';
+  document.getElementById('gridTable').innerHTML = h;
+}
+
+// --- TASK DETAIL ---
+function openDetail(lid) {
+  var loop = null;
+  for (var i = 0; i < LOOPS.length; i++) if (LOOPS[i].id === lid) loop = LOOPS[i];
+  if (!loop) return;
+  document.getElementById('detailTitle').innerHTML = loop.icon + ' ' + loop.name;
+  var s = calcStreak(loop);
+  var nd = nextDueDate(loop);
+  var h = '';
+  h += sec('Goal', loop.goal);
+  h += sec('Guard Rail', loop.guardRail);
+  h += sec('Guard Rail Break', loop.guardBreak);
+  h += sec('If-Then Trigger', loop.ifThen);
+  h += sec('Correction Rule', loop.correction);
+  if (nd) h += sec('Next Due', fmtFull(nd));
+  h += sec('Current Streak', s.current + ' in a row');
+  h += sec('Completion Rate', s.rate + '% (' + s.total + '/' + s.totalDue + ')');
+  document.getElementById('detailContent').innerHTML = h;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function sec(l, t) { return '<div class="detail-section"><div class="detail-section-label">' + l + '</div><div class="detail-section-text">' + t + '</div></div>'; }
+function closeDetail(e) { if (e.target === document.getElementById('detailOverlay')) closeDetailForce(); }
+function closeDetailForce() { document.getElementById('detailOverlay').classList.remove('open'); }
+
+// --- STREAKS ---
+function renderStreaks() {
+  var t = today(), h = '';
+  for (var li = 0; li < LOOPS.length; li++) {
+    var loop = LOOPS[li], s = calcStreak(loop);
+    h += '<div class="streak-card"><div class="streak-card-title">' + loop.icon + ' ' + loop.name + '</div>';
+    h += '<div class="streak-card-row">';
+    h += '<div class="streak-stat"><div class="num green">' + s.current + '</div><div class="label">Current</div></div>';
+    h += '<div class="streak-stat"><div class="num orange">' + s.longest + '</div><div class="label">Best</div></div>';
+    h += '<div class="streak-stat"><div class="num">' + s.rate + '%</div><div class="label">Rate</div></div>';
+    h += '<div class="streak-stat"><div class="num">' + s.total + '/' + s.totalDue + '</div><div class="label">Done</div></div>';
+    h += '</div><div class="heat-strip">';
+    for (var i = 27; i >= 0; i--) {
+      var d = addD(t, -i);
+      if (!isDue(loop, d)) { h += '<div class="heat-day not-due"></div>'; }
+      else if (isChecked(loop.id, d)) { h += '<div class="heat-day done"></div>'; }
+      else { h += '<div class="heat-day missed"></div>'; }
+    }
+    h += '</div></div>';
+  }
+  document.getElementById('streaksView').innerHTML = h;
+}
+
+// --- NAV ---
+function shiftView(n) { viewOffset += n; renderGrid(); }
+function goToday() { viewOffset = 0; renderGrid(); }
+
+function showView(v) {
+  document.getElementById('gridView').style.display = v === 'grid' ? 'block' : 'none';
+  document.getElementById('streaksView').style.display = v === 'streaks' ? 'block' : 'none';
+  document.getElementById('dataView').style.display = v === 'data' ? 'block' : 'none';
+  document.querySelectorAll('.nav-btn').forEach(function(b, i) {
+    b.classList.toggle('active', (i === 0 && v === 'grid') || (i === 1 && v === 'streaks') || (i === 2 && v === 'data'));
+  });
+  if (v === 'streaks') renderStreaks();
+}
+
+// --- DATA ---
+function exportJSON() {
+  var j = JSON.stringify(state, null, 2);
+  if (navigator.clipboard) navigator.clipboard.writeText(j).then(function() { alert('JSON copied!'); });
+  else prompt('Copy:', j);
+}
+function exportCSV() {
+  var t = today(), rows = ['date,task,frequency,status'];
+  for (var i = 90; i >= 0; i--) {
+    var d = addD(t, -i);
+    for (var li = 0; li < LOOPS.length; li++) {
+      var loop = LOOPS[li];
+      var due = isDue(loop, d), chk = isChecked(loop.id, d);
+      rows.push(d + ',' + loop.name + ',"' + loop.freq + '",' + (chk ? 'done' : due ? 'missed' : 'not_due'));
+    }
+  }
+  var csv = rows.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(csv).then(function() { alert('CSV copied! ' + rows.length + ' rows'); });
+  else prompt('Copy:', csv);
+}
+function showImport() {
+  var ta = document.getElementById('importArea'), btn = document.getElementById('importBtn');
+  ta.style.display = ta.style.display === 'none' ? 'block' : 'none';
+  btn.style.display = btn.style.display === 'none' ? 'block' : 'none';
+}
+function importData() {
+  try {
+    var d = JSON.parse(document.getElementById('importArea').value);
+    if (d.checks && d.anchors) { state = d; save(); renderGrid(); alert('Done!'); }
+    else alert('Invalid.');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+function resetData() {
+  if (confirm('Delete ALL history?') && confirm('Sure?')) {
+    state = { anchors: {}, checks: {} };
+    for (var i = 0; i < LOOPS.length; i++) state.anchors[LOOPS[i].id] = today();
+    save(); viewOffset = 0; renderGrid(); renderStreaks();
+  }
+}
+
+// --- INIT ---
+document.getElementById('todayLabel').textContent = fmtFull(today());
+save();
+renderGrid();
+</script>
+</body>
+</html>
