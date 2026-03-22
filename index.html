@@ -260,10 +260,12 @@ body {
 }
 .cell:active { transform: scale(0.84); }
 
-.cell.not-due { cursor: default; }
+.cell.not-due { cursor: pointer; }
 .cell.not-due .dot {
   width: 5px; height: 5px; border-radius: 50%; background: var(--border2);
+  transition: background 0.15s;
 }
+.cell.not-due:active .dot { background: var(--accent); }
 
 /* DUE TODAY — pulsing border */
 .cell.due {
@@ -317,8 +319,19 @@ body {
 .cell.future {
   background: transparent;
   border: 2px dashed var(--border2);
-  cursor: default; opacity: 0.22;
+  cursor: pointer; opacity: 0.35;
 }
+/* NOT-DUE FUTURE (not a scheduled day but tappable for early log) */
+.cell.not-due-future {
+  background: transparent;
+  border: 2px dashed transparent;
+  cursor: pointer;
+}
+.cell.not-due-future .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--border2);
+  transition: background 0.15s;
+}
+.cell.not-due-future:active .dot { background: var(--accent); }
 
 /* ══════════════ SETUP WIZARD ══════════════ */
 .setup-overlay {
@@ -925,11 +938,15 @@ function renderGrid() {
       } else if (due && isT) {
         h += '<div class="cell due" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')"></div>';
       } else if (isN && isF) {
-        h += '<div class="cell next-due"></div>';
+        /* next scheduled day — tappable for early completion */
+        h += '<div class="cell next-due" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')"></div>';
       } else if (due && isF) {
-        h += '<div class="cell future"></div>';
+        /* further scheduled day — tappable */
+        h += '<div class="cell future" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')"></div>';
       } else {
-        h += '<div class="cell not-due"><div class="dot"></div></div>';
+        /* not a scheduled day — tappable for early/ad-hoc log */
+        h += '<div class="cell not-due" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')">' +
+             (isF ? '<div class="dot"></div>' : '<div class="dot"></div>') + '</div>';
       }
 
       h += '</td>';
