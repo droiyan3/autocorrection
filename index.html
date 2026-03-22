@@ -9,221 +9,528 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  :root {
-    --bg: #0e1117; --surface: #161b22; --border: #30363d;
-    --text: #e6edf3; --text-dim: #7d8590; --accent: #58a6ff;
-    --green: #2ea043; --green-bg: #2ea04322;
-    --red: #f85149; --red-bg: #f8514922;
-    --orange: #d29922; --orange-bg: #d2992233;
-    --today-glow: #58a6ff18;
-  }
-  html, body { height: 100%; overflow: hidden; }
-  body {
-    font-family: 'Space Mono', 'Courier New', monospace;
-    background: var(--bg); color: var(--text);
-    display: flex; flex-direction: column; height: 100%;
-  }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* COMPACT HEADER - one line */
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .header h1 { font-size: 14px; font-weight: 700; white-space: nowrap; }
-  .header-date { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
-  .header-tabs { display: flex; gap: 6px; }
-  .tab-btn {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
-    padding: 4px 12px; border-radius: 14px; font-size: 11px;
-    font-family: 'Space Mono', monospace; cursor: pointer;
-  }
-  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+:root {
+  --bg:          #090c10;
+  --surface:     #111620;
+  --surface2:    #172030;
+  --border:      #1e2a38;
+  --border2:     #273545;
+  --text:        #d8e6f2;
+  --text-mid:    #7a9ab8;
+  --text-dim:    #445566;
+  --accent:      #3d9eff;
+  --accent-glow: rgba(61,158,255,0.15);
+  --green:       #2fd46c;
+  --green-bg:    rgba(47,212,108,0.12);
+  --red:         #ff4f4f;
+  --red-bg:      rgba(255,79,79,0.12);
+  --orange:      #f0a020;
+  --orange-bg:   rgba(240,160,32,0.12);
+  --today-col:   rgba(61,158,255,0.06);
 
-  /* TIME NAV - compact */
-  .time-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-  }
-  .tn-btn {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    width: 32px; height: 32px; border-radius: 50%; font-size: 16px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-family: monospace;
-  }
-  .tn-btn:active { background: var(--border); }
-  .tn-label { font-size: 12px; font-weight: 700; }
-  .tn-today {
-    background: transparent; border: 1px solid var(--accent); color: var(--accent);
-    padding: 3px 10px; border-radius: 10px; font-size: 10px;
-    font-family: 'Space Mono', monospace; cursor: pointer; font-weight: 700;
-  }
+  /* Layout constants — tweak here to resize everything */
+  --task-w:   190px;
+  --cell-sz:  52px;
+  --row-h:    78px;
+  --hdr-h:    46px;
+  --nav-h:    42px;
+  --date-h:   58px;
+}
 
-  /* GRID - fills remaining space */
-  .grid-wrap {
-    flex: 1; overflow: hidden; display: flex; flex-direction: column;
-  }
-  .grid-container {
-    flex: 1; overflow-x: auto; overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-  .grid-table {
-    border-collapse: separate; border-spacing: 0;
-    width: 100%; height: 100%;
-    table-layout: fixed;
-  }
-  .grid-table th, .grid-table td { text-align: center; padding: 0; vertical-align: middle; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column; height: 100%;
+}
 
-  /* Date header cells */
-  .date-cell { padding: 6px 2px; font-weight: 400; }
-  .date-cell .day-name {
-    display: block; font-size: 11px; text-transform: uppercase;
-    letter-spacing: 1px; color: var(--text-dim);
-  }
-  .date-cell .day-num {
-    display: block; font-size: 20px; font-weight: 700; color: var(--text); margin-top: 2px;
-  }
-  .date-cell.is-today .day-num {
-    background: var(--accent); color: #fff;
-    width: 32px; height: 32px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-  }
-  .date-cell.is-past { opacity: 0.5; }
+/* ══════════════ HEADER ══════════════ */
+.header {
+  height: var(--hdr-h); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.header-left { display: flex; align-items: baseline; gap: 10px; }
+.header h1 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; }
+.header-date { font-size: 10px; color: var(--text-dim); }
+.header-tabs { display: flex; gap: 5px; }
+.tab-btn {
+  padding: 5px 14px; border-radius: 20px; font-size: 11px; letter-spacing: 0.04em;
+  font-family: 'Space Mono', monospace; cursor: pointer;
+  background: transparent; border: 1px solid var(--border2); color: var(--text-dim);
+  transition: all 0.15s;
+}
+.tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  /* Task name column */
-  .task-cell {
-    position: sticky; left: 0; background: var(--bg); z-index: 10;
-    text-align: left; padding: 6px 10px;
-    border-right: 1px solid var(--border); cursor: pointer;
-    width: 130px; min-width: 130px; max-width: 130px;
-  }
-  .task-cell:active { background: var(--surface); }
-  .task-label { font-size: 13px; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-freq { font-size: 10px; color: var(--text-dim); margin-top: 2px; display: block; }
-  .streak-badge {
-    display: inline-block; font-size: 10px; font-weight: 700;
-    padding: 2px 6px; border-radius: 6px; margin-top: 3px;
-    background: var(--green-bg); color: var(--green);
-  }
+/* ══════════════ TIME NAV ══════════════ */
+.time-nav {
+  height: var(--nav-h); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.tn-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border2); color: var(--text-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer;
+}
+.tn-btn:active { opacity: 0.55; }
+.tn-label { font-size: 11px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.05em; }
+.tn-today {
+  padding: 5px 13px; border-radius: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  font-family: 'Space Mono', monospace; cursor: pointer;
+  background: transparent; border: 1px solid var(--accent); color: var(--accent);
+}
 
-  /* Grid data cells */
-  .g-cell { padding: 4px; }
-  .g-cell.today-col { background: var(--today-glow); }
+/* ══════════════ GRID WRAP ══════════════ */
+.grid-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.grid-scroll {
+  flex: 1; overflow: auto; -webkit-overflow-scrolling: touch;
+}
 
-  .cell {
-    width: 42px; height: 42px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto; cursor: pointer; transition: all 0.12s;
-  }
-  .cell.not-due { cursor: default; }
-  .cell.not-due .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+/* ══════════════ TABLE ══════════════ */
+/*
+  Key fix: table-layout fixed + width 100% + explicit first col width via <col>.
+  Task col gets --task-w. The 7 day cols share the remaining space equally.
+  No more cells floating in oversized columns.
+*/
+.grid-table {
+  width: 100%; height: 100%;
+  table-layout: fixed;
+  border-collapse: separate; border-spacing: 0;
+}
+.col-task { width: var(--task-w); }
+/* day cols: no explicit width → split remaining 100% equally (table-layout: fixed) */
 
-  .cell.due { background: var(--surface); border: 2.5px solid var(--accent); }
-  .cell.due:active { transform: scale(0.9); }
+/* ══════════════ DATE HEADER CELLS ══════════════ */
+.date-cell {
+  height: var(--date-h);
+  vertical-align: middle; text-align: center; padding: 0 4px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 5; background: var(--bg);
+}
+.date-cell.today-col-hdr { background: color-mix(in srgb, var(--bg) 85%, var(--accent)); }
+.date-cell.is-past { opacity: 0.4; }
+.day-name {
+  display: block; font-size: 9px; text-transform: uppercase;
+  letter-spacing: 1.8px; color: var(--text-dim); margin-bottom: 5px;
+}
+.day-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; color: var(--text);
+  width: 34px; height: 34px;
+}
+.date-cell.is-today .day-num {
+  background: var(--accent); color: #fff; border-radius: 10px;
+  font-size: 15px;
+}
 
-  .cell.done { background: var(--green); border: 2.5px solid var(--green); }
-  .cell.done svg { width: 20px; height: 20px; }
+/* ══════════════ TASK NAME COLUMN ══════════════ */
+.task-header-cell {
+  position: sticky; left: 0; top: 0; z-index: 10;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  width: var(--task-w);
+}
+.task-cell {
+  position: sticky; left: 0; z-index: 4;
+  background: var(--bg);
+  text-align: left; padding: 10px 12px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  width: var(--task-w); height: var(--row-h);
+  vertical-align: top;
+}
+.task-cell:active { background: var(--surface); }
+.task-icon { font-size: 17px; line-height: 1; margin-bottom: 4px; display: block; }
+.task-label {
+  font-size: 12px; font-weight: 700; display: block;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text); letter-spacing: 0.02em; line-height: 1.2;
+}
+.task-freq {
+  font-size: 9px; color: var(--text-dim); margin-top: 3px; display: block;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.streak-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-weight: 700; margin-top: 5px;
+  padding: 2px 7px; border-radius: 6px;
+  font-size: 9px;
+  background: var(--green-bg); color: var(--green);
+  transition: all 0.3s;
+}
 
-  .cell.missed { background: var(--red-bg); border: 2.5px solid var(--red); }
+/* ── Streak tier overrides ── */
+/* Tier 2: 3–6 due-completions — warm gold */
+.streak-t2 {
+  font-size: 10px; padding: 3px 8px;
+  background: rgba(240,195,40,0.14); color: #f0c828;
+  animation: strkPulse 3s ease-in-out infinite;
+}
+/* Tier 3: 7–13 — orange fire */
+.streak-t3 {
+  font-size: 11px; padding: 3px 9px;
+  background: rgba(240,110,20,0.18); color: #f07014;
+  animation: strkPulse 2s ease-in-out infinite;
+}
+/* Tier 4: 14+ — GOLD / on fire */
+.streak-t4 {
+  font-size: 12px; padding: 4px 10px;
+  background: rgba(255,176,0,0.2); color: #ffb000;
+  box-shadow: 0 0 12px rgba(255,176,0,0.28);
+  animation: strkPulse 1.4s ease-in-out infinite;
+}
+@keyframes strkPulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.75; transform: scale(0.96); }
+}
 
-  .cell.carry {
-    background: var(--orange-bg); border: 2.5px solid var(--orange);
-    -webkit-animation: pulse 2.5s ease-in-out infinite;
-    animation: pulse 2.5s ease-in-out infinite;
-  }
+/* Left-border glow on task cell per tier */
+.task-cell.sg-t2 { border-left: 3px solid rgba(240,195,40,0.55); }
+.task-cell.sg-t3 {
+  border-left: 3px solid rgba(240,110,20,0.75);
+  box-shadow: inset 4px 0 14px rgba(240,110,20,0.10);
+}
+.task-cell.sg-t4 {
+  border-left: 3px solid #ffb000;
+  box-shadow: inset 4px 0 20px rgba(255,176,0,0.16);
+  animation: goldRow 4s ease-in-out infinite;
+}
+@keyframes goldRow {
+  0%,100% { box-shadow: inset 4px 0 20px rgba(255,176,0,0.16); }
+  50%      { box-shadow: inset 4px 0 28px rgba(255,176,0,0.28); }
+}
 
-  .cell.next-due {
-    background: transparent; border: 2.5px solid var(--accent);
-    -webkit-box-shadow: 0 0 10px var(--accent);
-    box-shadow: 0 0 10px var(--accent);
-    cursor: default;
-  }
+/* Past-done cells inside an active streak row get a brighter tint */
+.on-streak { background: rgba(47,212,108,0.22) !important; border-color: rgba(47,212,108,0.5) !important; }
 
-  .cell.future { background: transparent; border: 2.5px dashed var(--border); cursor: default; opacity: 0.4; }
-  .cell.past-done { background: var(--green); border: 2.5px solid var(--green); opacity: 0.5; }
+/* ══════════════ iOS INSTALL BANNER ══════════════ */
+.ios-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 600;
+  background: #111e2e; border-top: 1px solid var(--border2);
+  padding: 12px 16px 20px;
+  display: flex; align-items: flex-start; gap: 12px;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.ios-banner.visible { transform: translateY(0); }
+.ios-banner-icon {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.ios-banner-body { flex: 1; min-width: 0; }
+.ios-banner-title { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.ios-banner-sub {
+  font-size: 10px; color: var(--text-mid); line-height: 1.6;
+}
+.ios-banner-sub strong { color: var(--text); }
+.ios-banner-arrow { font-size: 18px; margin: 0 2px; vertical-align: middle; }
+.ios-banner-dismiss {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text-dim); font-size: 14px; line-height: 26px;
+  text-align: center; cursor: pointer; margin-top: 2px;
+}
 
-  @-webkit-keyframes pulse {
-    0%, 100% { -webkit-box-shadow: 0 0 0 0 transparent; }
-    50% { -webkit-box-shadow: 0 0 0 5px rgba(210,153,34,0.2); }
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 transparent; }
-    50% { box-shadow: 0 0 0 5px rgba(210,153,34,0.2); }
-  }
+/* ══════════════ GRID DATA CELLS ══════════════ */
+.g-cell {
+  text-align: center; vertical-align: middle;
+  padding: 0; height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+}
+.g-cell.today-col { background: var(--today-col); }
 
-  /* DETAIL SHEET */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    z-index: 200; display: flex; align-items: flex-end; justify-content: center;
-    opacity: 0; pointer-events: none;
-    -webkit-transition: opacity 0.2s; transition: opacity 0.2s;
-  }
-  .overlay.open { opacity: 1; pointer-events: auto; }
-  .sheet {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px 16px 0 0; width: 100%; max-width: 500px;
-    max-height: 70vh; overflow-y: auto; padding: 20px 18px 30px;
-    -webkit-transform: translateY(100%); transform: translateY(100%);
-    -webkit-transition: -webkit-transform 0.25s; transition: transform 0.25s;
-  }
-  .overlay.open .sheet { -webkit-transform: translateY(0); transform: translateY(0); }
-  .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
-  .sheet-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
-  .sheet-sec { margin-bottom: 14px; }
-  .sheet-lbl { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-  .sheet-txt { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
-  .sheet-close {
-    width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); border-radius: 10px; font-family: 'Space Mono', monospace;
-    font-size: 13px; cursor: pointer; margin-top: 8px;
-  }
+/* ══════════════ TASK CELLS (check boxes) ══════════════ */
+.cell {
+  width: var(--cell-sz); height: var(--cell-sz);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto; cursor: pointer;
+  transition: transform 0.1s;
+}
+.cell:active { transform: scale(0.84); }
 
-  /* STREAKS VIEW */
-  .streaks-view { padding: 14px; display: none; overflow-y: auto; flex: 1; }
-  .s-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-  .s-title { font-size: 14px; font-weight: 700; }
-  .s-row { display: flex; justify-content: space-between; margin-top: 10px; }
-  .s-stat { text-align: center; }
-  .s-stat .num { font-size: 22px; font-weight: 700; }
-  .s-stat .lbl { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
-  .s-stat .num.green { color: var(--green); }
-  .s-stat .num.orange { color: var(--orange); }
-  .heat { display: flex; gap: 3px; margin-top: 10px; }
-  .heat .hd { width: 10px; height: 10px; border-radius: 2px; background: var(--border); }
-  .heat .hd.done { background: var(--green); }
-  .heat .hd.missed { background: var(--red); }
-  .heat .hd.nd { opacity: 0.3; }
+.cell.not-due { cursor: default; }
+.cell.not-due .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--border2);
+}
 
-  /* DATA VIEW */
-  .data-view { padding: 14px; display: none; overflow-y: auto; flex: 1; }
-  .d-btn {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 14px; border-radius: 10px; font-size: 13px;
-    font-family: 'Space Mono', monospace; cursor: pointer;
-    text-align: left; width: 100%; margin-bottom: 10px;
-  }
-  .d-btn:active { background: var(--border); }
-  .d-btn .sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; display: block; }
-  .d-ta {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    color: var(--text); font-family: monospace; font-size: 11px;
-    padding: 10px; border-radius: 8px; margin-bottom: 10px; min-height: 90px; display: none;
-  }
+/* DUE TODAY — pulsing border */
+.cell.due {
+  background: var(--surface2); border: 2px solid var(--accent);
+  animation: duePulse 3s ease-in-out infinite;
+}
+@keyframes duePulse {
+  0%,100% { box-shadow: 0 0 0 0 transparent; }
+  50%      { box-shadow: 0 0 0 5px var(--accent-glow); }
+}
+
+/* DONE TODAY */
+.cell.done {
+  background: var(--green); border: 2px solid var(--green);
+  box-shadow: 0 2px 10px rgba(47,212,108,0.35);
+}
+.cell.done svg { width: 22px; height: 22px; }
+
+/* DONE PAST */
+.cell.past-done {
+  background: var(--green-bg);
+  border: 2px solid rgba(47,212,108,0.3);
+}
+.cell.past-done svg { width: 18px; height: 18px; opacity: 0.65; }
+
+/* MISSED */
+.cell.missed {
+  background: var(--red-bg); border: 2px solid var(--red);
+}
+.cell.missed svg { width: 14px; height: 14px; }
+
+/* CARRY (overdue, not a due day) */
+.cell.carry {
+  background: var(--orange-bg); border: 2px solid var(--orange);
+  animation: carryPulse 2.2s ease-in-out infinite;
+}
+@keyframes carryPulse {
+  0%,100% { box-shadow: 0 0 0 0 transparent; }
+  50%      { box-shadow: 0 0 8px 3px rgba(240,160,32,0.2); }
+}
+.cell.carry svg { width: 14px; height: 14px; }
+
+/* NEXT DUE (upcoming) */
+.cell.next-due {
+  background: transparent;
+  border: 2px solid rgba(61,158,255,0.35);
+  cursor: default; opacity: 0.55;
+}
+
+/* FUTURE DUE (beyond next) */
+.cell.future {
+  background: transparent;
+  border: 2px dashed var(--border2);
+  cursor: default; opacity: 0.22;
+}
+
+/* ══════════════ SETUP WIZARD ══════════════ */
+.setup-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  z-index: 500;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.setup-overlay.open { display: flex; }
+.setup-box {
+  width: 100%; max-width: 540px; max-height: 92vh;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 18px; overflow-y: auto;
+  padding: 28px 24px 24px;
+}
+.setup-logo { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 6px; }
+.setup-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.setup-sub { font-size: 11px; color: var(--text-mid); line-height: 1.7; margin-bottom: 24px; }
+.setup-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.setup-row:last-of-type { border-bottom: none; }
+.setup-lhs { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.setup-icon { font-size: 20px; flex-shrink: 0; }
+.setup-info { min-width: 0; }
+.setup-name { font-size: 12px; font-weight: 700; display: block; }
+.setup-freq { font-size: 10px; color: var(--text-dim); margin-top: 2px; display: block; }
+.setup-date {
+  -webkit-appearance: none; appearance: none;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Space Mono', monospace;
+  font-size: 11px; padding: 7px 10px; border-radius: 8px;
+  width: 148px; flex-shrink: 0;
+}
+.setup-date:focus { outline: none; border-color: var(--accent); }
+.setup-go {
+  display: block; width: 100%; margin-top: 22px; padding: 14px;
+  background: var(--accent); border: none; border-radius: 11px;
+  color: #fff; font-family: 'Space Mono', monospace;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.setup-go:active { opacity: 0.8; }
+
+/* ══════════════ DETAIL SHEET ══════════════ */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.overlay.open { opacity: 1; pointer-events: auto; }
+.sheet {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 18px 18px 0 0; width: 100%; max-width: 620px;
+  max-height: 75vh; overflow-y: auto; padding: 18px 20px 34px;
+  transform: translateY(100%); transition: transform 0.25s;
+}
+.overlay.open .sheet { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border2); margin: 0 auto 18px; }
+.sheet-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+.sheet-sec { margin-bottom: 12px; }
+.sheet-lbl {
+  font-size: 9px; font-weight: 700; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 1.6px; margin-bottom: 4px;
+}
+.sheet-txt { font-size: 12px; color: var(--text-mid); line-height: 1.68; }
+.sheet-actions { display: flex; gap: 8px; margin-top: 18px; }
+.sheet-close {
+  flex: 1; padding: 12px; background: var(--surface2);
+  border: 1px solid var(--border2); color: var(--text-mid);
+  border-radius: 10px; font-family: 'Space Mono', monospace; font-size: 12px; cursor: pointer;
+}
+.btn-reset-anchor {
+  padding: 12px 14px; background: transparent;
+  border: 1px solid var(--border2); color: var(--text-dim);
+  border-radius: 10px; font-family: 'Space Mono', monospace; font-size: 10px; cursor: pointer;
+  white-space: nowrap; letter-spacing: 0.03em;
+}
+
+/* ══════════════ STREAKS VIEW ══════════════ */
+.streaks-view {
+  display: none; overflow-y: auto; padding: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+.s-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+}
+.s-title { font-size: 13px; font-weight: 700; }
+.s-row { display: flex; justify-content: space-between; margin-top: 12px; }
+.s-stat { text-align: center; }
+.s-num { font-size: 22px; font-weight: 700; }
+.s-lbl { font-size: 9px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+.s-num.green { color: var(--green); }
+.s-num.orange { color: var(--orange); }
+.heat { display: flex; gap: 3px; margin-top: 12px; flex-wrap: wrap; }
+.hd { width: 11px; height: 11px; border-radius: 2px; background: var(--border); }
+.hd.done { background: var(--green); }
+.hd.missed { background: var(--red); }
+.hd.nd { opacity: 0.2; }
+
+/* ══════════════ DATA VIEW ══════════════ */
+.data-view { display: none; overflow-y: auto; padding: 14px; }
+.d-btn {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 14px 16px; border-radius: 10px; font-size: 12px;
+  font-family: 'Space Mono', monospace; cursor: pointer;
+  text-align: left; width: 100%; margin-bottom: 10px;
+}
+.d-btn:active { background: var(--border); }
+.d-btn .sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; display: block; }
+.d-ta {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-family: monospace; font-size: 11px;
+  padding: 10px; border-radius: 8px; margin-bottom: 10px; min-height: 90px; display: none;
+}
+
+/* ══════════════ RESET ANCHOR MODAL ══════════════ */
+.anchor-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 400; display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.anchor-overlay.open { display: flex; }
+.anchor-box {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 24px; width: 100%; max-width: 360px;
+}
+.anchor-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.anchor-sub { font-size: 11px; color: var(--text-mid); line-height: 1.6; margin-bottom: 18px; }
+.anchor-date {
+  -webkit-appearance: none; appearance: none;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Space Mono', monospace;
+  font-size: 12px; padding: 8px 12px; border-radius: 8px;
+  width: 100%; margin-bottom: 14px;
+}
+.anchor-date:focus { outline: none; border-color: var(--accent); }
+.anchor-btns { display: flex; gap: 8px; }
+.anchor-save {
+  flex: 1; padding: 11px; background: var(--accent); border: none;
+  border-radius: 9px; color: #fff; font-family: 'Space Mono', monospace;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.anchor-cancel {
+  padding: 11px 16px; background: transparent; border: 1px solid var(--border2);
+  color: var(--text-mid); border-radius: 9px; font-family: 'Space Mono', monospace;
+  font-size: 12px; cursor: pointer;
+}
 </style>
 </head>
 <body>
 
-<div class="overlay" id="overlay" onclick="closeD(event)">
-  <div class="sheet"><div class="sheet-handle"></div>
-    <div class="sheet-title" id="shTitle"></div>
-    <div id="shContent"></div>
-    <button class="sheet-close" onclick="closeDF()">Close</button>
+<!-- ══ SETUP WIZARD ══ -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-box">
+    <div class="setup-logo">// autocorrection</div>
+    <div class="setup-title">Day One Setup</div>
+    <div class="setup-sub">
+      When did you last complete each task?<br>
+      This anchors your schedule so the system knows what's due next.<br>
+      <strong>Leave today's date if you're starting fresh.</strong>
+    </div>
+    <div id="setupRows"></div>
+    <button class="setup-go" onclick="doSetup()">START TRACKING →</button>
   </div>
 </div>
 
+<!-- ══ RESET ANCHOR MODAL ══ -->
+<div class="anchor-overlay" id="anchorOverlay">
+  <div class="anchor-box">
+    <div class="anchor-title" id="anchorTitle"></div>
+    <div class="anchor-sub">Set the date you last completed this task. Future due dates will be calculated from here.</div>
+    <input type="date" class="anchor-date" id="anchorDate">
+    <div class="anchor-btns">
+      <button class="anchor-save" onclick="saveAnchor()">Save</button>
+      <button class="anchor-cancel" onclick="closeAnchor()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL SHEET ══ -->
+<div class="overlay" id="overlay" onclick="closeD(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="shTitle"></div>
+    <div id="shContent"></div>
+    <div class="sheet-actions">
+      <button class="sheet-close" onclick="closeDF()">Close</button>
+      <button class="btn-reset-anchor" onclick="openAnchor()">Reset Start Date</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ iOS INSTALL BANNER ══ -->
+<div class="ios-banner" id="iosBanner">
+  <div class="ios-banner-icon">⚡</div>
+  <div class="ios-banner-body">
+    <div class="ios-banner-title">Add to Home Screen</div>
+    <div class="ios-banner-sub">
+      Get the full-screen experience — tap
+      <strong>Share <span class="ios-banner-arrow">⬆</span></strong>
+      then <strong>"Add to Home Screen"</strong>
+    </div>
+  </div>
+  <div class="ios-banner-dismiss" onclick="dismissBanner()">✕</div>
+</div>
+
+<!-- ══ HEADER ══ -->
 <div class="header">
   <div class="header-left">
     <h1>// autocorrection</h1>
@@ -236,70 +543,88 @@
   </div>
 </div>
 
+<!-- ══ GRID VIEW ══ -->
 <div id="gridView" class="grid-wrap">
   <div class="time-nav">
-    <button class="tn-btn" onclick="shift(-7)">&larr;</button>
+    <button class="tn-btn" onclick="shift(-7)">←</button>
     <span class="tn-label" id="rangeLabel"></span>
     <button class="tn-today" onclick="goT()">TODAY</button>
-    <button class="tn-btn" onclick="shift(7)">&rarr;</button>
+    <button class="tn-btn" onclick="shift(7)">→</button>
   </div>
-  <div class="grid-container">
-    <table class="grid-table" id="grid"></table>
+  <div class="grid-scroll">
+    <table class="grid-table" id="grid">
+      <colgroup>
+        <col class="col-task">
+        <col><col><col><col><col><col><col>
+      </colgroup>
+    </table>
   </div>
 </div>
 
+<!-- ══ STREAKS VIEW ══ -->
 <div id="streaksView" class="streaks-view"></div>
 
+<!-- ══ DATA VIEW ══ -->
 <div id="dataView" class="data-view">
   <button class="d-btn" onclick="expJSON()">Export JSON<span class="sub">Full backup to clipboard</span></button>
   <button class="d-btn" onclick="expCSV()">Export CSV<span class="sub">For spreadsheet analysis</span></button>
   <button class="d-btn" onclick="showImp()">Import JSON<span class="sub">Restore from backup</span></button>
   <textarea class="d-ta" id="impArea" placeholder="Paste JSON here..."></textarea>
   <button class="d-btn" id="impBtn" style="display:none;background:var(--green);border-color:var(--green)" onclick="doImp()">Confirm Import</button>
-  <button class="d-btn" onclick="doReset()" style="border-color:var(--red);color:var(--red)">Reset All<span class="sub">Clear everything. Cannot be undone.</span></button>
+  <button class="d-btn" onclick="doReset()" style="border-color:var(--red);color:var(--red)">
+    Reset All Data<span class="sub">Clear everything and restart setup. Cannot be undone.</span>
+  </button>
 </div>
 
 <script>
-// NO TEST MODE - uses real date
 var DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DAYS_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 var LOOPS = [
-  { id:'laundry', name:'Wash Clothes', freq:'Every 2 days', cy:2, icon:'\u{1F9FA}',
+  {
+    id:'laundry', name:'Wash Clothes', freq:'Every 2 days', cy:2, icon:'🧺',
     goal:'Wash every second day. Every dry load gets folded and put away before the next load goes on.',
     gr:"Clothes don't stay on the rack or bed for more than one day.",
     gb:'Dry clothes sitting on rack or bed for 2+ days.',
-    it:"If clothes are dry and it's 9 PM, stop and put them away (10 min). Next wash forces you to clear the rack.",
-    cr:"If you can't put them away now, they go into a single designated basket \u2014 not the bed."
+    it:"If clothes are dry and it's 9 PM, stop and put them away (10 min). The next wash forces you to clear the rack.",
+    cr:"If you can't put them away now, they go into a single designated basket — not the bed."
   },
-  { id:'clothes', name:'Clothes to Wardrobe', freq:'Daily', cy:1, icon:'\u{1F455}',
+  {
+    id:'clothes', name:'Clothes to Wardrobe', freq:'Daily', cy:1, icon:'👕',
     goal:'Every night after showering, dirty clothes to laundry room, not-dirty clothes to designated spot.',
     gr:'No clothes accumulate in the bathroom or on the bed overnight.',
     gb:'Clothes sitting in bathroom or on bed for more than one night.',
     it:'After shower, get dressed for bed. Before getting into bed: dirty to laundry room, not-dirty to spot. 2 minutes.',
-    cr:'If too tired, dirty clothes go into basket by bedroom door \u2014 move them first thing in the morning.'
+    cr:'If too tired, dirty clothes go into basket by bedroom door — move them first thing in the morning.'
   },
-  { id:'trash', name:'Trash Out', freq:'Daily', cy:1, icon:'\u{1F5D1}',
+  {
+    id:'trash', name:'Trash Out', freq:'Daily', cy:1, icon:'🗑️',
     goal:'Take trash out every day when leaving the house. One bag per day, no accumulation.',
     gr:'Trash goes out minimum on MWF (gym days). Never sits more than 2 days.',
     gb:"Trash hasn't gone out for 3+ days.",
     it:'Before leaving for gym on MWF, grab trash on your way out. Other days, take it when leaving.',
-    cr:"If rushing and forgot, it goes out when you get home \u2014 don't let it roll to next day."
+    cr:"If rushing and forgot, it goes out when you get home — don't let it roll to next day."
   },
-  { id:'litter', name:'Change Litter', freq:'Every 3 days', cy:3, icon:'\u{1F431}',
+  {
+    id:'litter', name:'Change Litter', freq:'Every 3 days', cy:3, icon:'🐱',
     goal:'Full litter change every 3 days.',
     gr:'Never goes longer than 4 days.',
     gb:'5+ days without a change.',
     it:'Every 3 days, before leaving the house, change the litter. 5 minutes.',
-    cr:'If you miss day 3, it gets done on day 4 \u2014 no exceptions.'
+    cr:'If you miss day 3, it gets done on day 4 — no exceptions.'
   },
-  { id:'vacuum', name:'Vacuum', freq:'2x / week', cy:3, icon:'\u{1F9F9}',
+  {
+    id:'vacuum', name:'Vacuum', freq:'2× per week', cy:3, icon:'🧹',
     goal:'Vacuum twice per week.',
     gr:'Vacuum at least once per week.',
     gb:'A full week passes with no vacuum.',
     it:'Pick 2 specific days. If done together with dusting, 15 min instead of 30.',
     cr:'If the scheduled day gets missed, it must happen the next day.'
   },
-  { id:'dust', name:'Dusting', freq:'Weekly', cy:7, icon:'\u{2728}',
+  {
+    id:'dust', name:'Dusting', freq:'Weekly', cy:7, icon:'✨',
     goal:'Dust once per week.',
     gr:'At least once every two weeks.',
     gb:'2 weeks pass with no dusting.',
@@ -308,184 +633,447 @@ var LOOPS = [
   }
 ];
 
-var SK='ac_v7', vOff=0, state;
+/* ─── State ─── */
+var SK = 'ac_v7';
+var vOff = 0;
+var state;
+var curDetailId = null;
+var anchorTargetId = null;
 
-// Clear old versions
-var oldKeys = ['autocorrect_data_v1','autocorrect_v2','autocorrect_v3','autocorrect_v4','autocorrect_v5','autocorrect_v6'];
-for (var k=0;k<oldKeys.length;k++) localStorage.removeItem(oldKeys[k]);
+// Migrate away from old keys
+['autocorrect_data_v1','autocorrect_v2','autocorrect_v3','autocorrect_v4','autocorrect_v5','autocorrect_v6']
+  .forEach(function(k) { localStorage.removeItem(k); });
 
+/* ─── Date helpers ─── */
 function td() { return new Date().toISOString().split('T')[0]; }
-function aD(s,n) { var d=new Date(s+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
-function dD(a,b) { return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000); }
-
-// Safe day name - no toLocaleDateString
-function dayName(s) { return DAYS[new Date(s+'T12:00:00').getDay()]; }
-function dayNum(s) { return new Date(s+'T12:00:00').getDate(); }
+function aD(s, n) {
+  var d = new Date(s + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+function dD(a, b) {
+  return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000);
+}
+function dayName(s) { return DAYS[new Date(s + 'T12:00:00').getDay()]; }
+function dayNum(s)  { return new Date(s + 'T12:00:00').getDate(); }
 function fmtMD(s) {
-  var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var d=new Date(s+'T12:00:00');
-  return m[d.getMonth()]+' '+d.getDate();
+  var d = new Date(s + 'T12:00:00');
+  return MONTHS[d.getMonth()] + ' ' + d.getDate();
 }
 function fmtFull(s) {
-  var dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  var m=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var d=new Date(s+'T12:00:00');
-  return dn[d.getDay()]+', '+m[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+  var d = new Date(s + 'T12:00:00');
+  return DAYS_LONG[d.getDay()] + ', ' + MONTHS_LONG[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
 }
 
-function load() { try{var r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){} return fresh(); }
-function fresh() { var a={};for(var i=0;i<LOOPS.length;i++)a[LOOPS[i].id]=td();return{anchors:a,checks:{}}; }
-function save() { localStorage.setItem(SK,JSON.stringify(state)); }
+/* ─── Persistence ─── */
+function loadState() {
+  try {
+    var r = localStorage.getItem(SK);
+    if (r) return JSON.parse(r);
+  } catch(e) {}
+  return null;
+}
+function freshState() {
+  var a = {};
+  for (var i = 0; i < LOOPS.length; i++) a[LOOPS[i].id] = td();
+  return { anchors: a, checks: {}, setupDone: false };
+}
+function save() { localStorage.setItem(SK, JSON.stringify(state)); }
 
-function effAnch(lp,asOf) {
-  var anc=state.anchors[lp.id],lat=anc,pfx=lp.id+'_';
-  for(var k in state.checks){if(k.indexOf(pfx)===0&&state.checks[k]){var d=k.substring(pfx.length);if(d<=asOf&&d>lat)lat=d;}}
+/* ─── Setup Wizard ─── */
+function showSetup() {
+  var t = td(), h = '';
+  for (var i = 0; i < LOOPS.length; i++) {
+    var lp = LOOPS[i];
+    h += '<div class="setup-row">';
+    h += '<div class="setup-lhs">';
+    h += '<span class="setup-icon">' + lp.icon + '</span>';
+    h += '<div class="setup-info"><span class="setup-name">' + lp.name + '</span><span class="setup-freq">' + lp.freq + '</span></div>';
+    h += '</div>';
+    h += '<input type="date" class="setup-date" id="sd_' + lp.id + '" value="' + t + '" max="' + t + '">';
+    h += '</div>';
+  }
+  document.getElementById('setupRows').innerHTML = h;
+  document.getElementById('setupOverlay').classList.add('open');
+}
+
+function doSetup() {
+  var t = td();
+  for (var i = 0; i < LOOPS.length; i++) {
+    var lp = LOOPS[i];
+    var el = document.getElementById('sd_' + lp.id);
+    var v = el ? el.value : t;
+    if (!v || v > t) v = t;
+    state.anchors[lp.id] = v;
+  }
+  state.setupDone = true;
+  save();
+  document.getElementById('setupOverlay').classList.remove('open');
+  renderGrid();
+}
+
+/* ─── Scheduling logic ─── */
+function effAnch(lp, asOf) {
+  var anc = state.anchors[lp.id];
+  var lat = anc;
+  var pfx = lp.id + '_';
+  for (var k in state.checks) {
+    if (k.indexOf(pfx) === 0 && state.checks[k]) {
+      var d = k.substring(pfx.length);
+      if (d <= asOf && d > lat) lat = d;
+    }
+  }
   return lat;
 }
 
-function isDue(lp,ds) { var a=effAnch(lp,ds),df=dD(a,ds); return df>=0&&df%lp.cy===0; }
-function isChk(lid,ds) { return state.checks[lid+'_'+ds]===true; }
+function isDue(lp, ds) {
+  var a = effAnch(lp, ds);
+  var df = dD(a, ds);
+  return df >= 0 && df % lp.cy === 0;
+}
+function isChk(lid, ds) { return state.checks[lid + '_' + ds] === true; }
 
-function prevDue(lp,ds) { for(var i=1;i<=lp.cy*3;i++){var d=aD(ds,-i);if(isDue(lp,d))return d;} return null; }
-
-function isCarry(lp,ds) {
-  var t=td(); if(ds>t||isDue(lp,ds))return false;
-  var p=prevDue(lp,ds); return p?!isChk(lp.id,p):false;
+function prevDue(lp, ds) {
+  for (var i = 1; i <= lp.cy * 3; i++) {
+    var d = aD(ds, -i);
+    if (isDue(lp, d)) return d;
+  }
+  return null;
 }
 
-function nextDue(lp) { var t=td();for(var i=1;i<=30;i++){var d=aD(t,i);if(isDue(lp,d))return d;}return null; }
+function isCarry(lp, ds) {
+  var t = td();
+  if (ds > t || isDue(lp, ds)) return false;
+  var p = prevDue(lp, ds);
+  return p ? !isChk(lp.id, p) : false;
+}
 
-function doChk(lid,ds) { state.checks[lid+'_'+ds]=!state.checks[lid+'_'+ds]; save(); renderGrid(); }
+function nextDue(lp) {
+  var t = td();
+  for (var i = 1; i <= 30; i++) {
+    var d = aD(t, i);
+    if (isDue(lp, d)) return d;
+  }
+  return null;
+}
+
+function doChk(lid, ds) {
+  state.checks[lid + '_' + ds] = !state.checks[lid + '_' + ds];
+  save();
+  renderGrid();
+}
 
 function calcStr(lp) {
-  var t=td(),cur=0,lon=0,tot=0,tdu=0,tmp=0;
-  for(var i=90;i>=0;i--){var d=aD(t,-i);if(!isDue(lp,d))continue;tdu++;if(isChk(lp.id,d)){tot++;tmp++;if(tmp>lon)lon=tmp;}else tmp=0;}
-  for(var i=0;i<=90;i++){var d=aD(t,-i);if(!isDue(lp,d))continue;if(d===t&&!isChk(lp.id,d))continue;if(isChk(lp.id,d))cur++;else break;}
-  return{cur:cur,lon:lon,tot:tot,tdu:tdu,rate:tdu>0?Math.round(tot/tdu*100):0};
+  var t = td(), cur = 0, lon = 0, tot = 0, tdu = 0, tmp = 0;
+  for (var i = 90; i >= 0; i--) {
+    var d = aD(t, -i);
+    if (!isDue(lp, d)) continue;
+    tdu++;
+    if (isChk(lp.id, d)) { tot++; tmp++; if (tmp > lon) lon = tmp; }
+    else tmp = 0;
+  }
+  for (var i = 0; i <= 90; i++) {
+    var d = aD(t, -i);
+    if (!isDue(lp, d)) continue;
+    if (d === t && !isChk(lp.id, d)) continue;
+    if (isChk(lp.id, d)) cur++;
+    else break;
+  }
+  return { cur: cur, lon: lon, tot: tot, tdu: tdu, rate: tdu > 0 ? Math.round(tot / tdu * 100) : 0 };
 }
 
-// --- GRID ---
+/* ─── Streak tier helper ─── */
+function streakTier(n) {
+  if (n >= 14) return 4;
+  if (n >= 7)  return 3;
+  if (n >= 3)  return 2;
+  if (n >= 1)  return 1;
+  return 0;
+}
+function streakLabel(n) {
+  if (n >= 14) return '🔥🔥🔥 ' + n;
+  if (n >= 7)  return '🔥🔥 ' + n;
+  if (n >= 3)  return '🔥 ' + n;
+  return '🔥 ' + n;
+}
+
+/* ─── SVG icons ─── */
+var SVG_CHECK     = '<svg fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var SVG_CHECK_DIM = '<svg fill="none" stroke="rgba(47,212,108,0.65)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var SVG_X         = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg>';
+var SVG_WARN      = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.5"><path d="M12 8v5" stroke-linecap="round"/><circle cx="12" cy="16.5" r="0.8" fill="var(--orange)"/></svg>';
+
+/* ─── Grid render ─── */
 function renderGrid() {
-  var t=td(), start=aD(t,vOff-2), days=[];
-  for(var i=0;i<7;i++) days.push(aD(start,i));
+  var t = td();
+  var start = aD(t, vOff - 2);
+  var days = [];
+  for (var i = 0; i < 7; i++) days.push(aD(start, i));
 
-  document.getElementById('rangeLabel').textContent=fmtMD(days[0])+' \u2014 '+fmtMD(days[6]);
+  document.getElementById('rangeLabel').textContent = fmtMD(days[0]) + ' — ' + fmtMD(days[6]);
 
-  var nds={};
-  for(var i=0;i<LOOPS.length;i++){var n=nextDue(LOOPS[i]);if(n)nds[LOOPS[i].id]=n;}
-
-  var h='<thead><tr><th class="task-cell" style="border-bottom:1px solid var(--border)"></th>';
-  for(var i=0;i<days.length;i++){
-    var d=days[i],c='date-cell';
-    if(d===t)c+=' is-today'; else if(d<t)c+=' is-past';
-    h+='<th class="'+c+'"><span class="day-name">'+dayName(d)+'</span><span class="day-num">'+dayNum(d)+'</span></th>';
+  /* Pre-compute next due dates */
+  var nds = {};
+  for (var i = 0; i < LOOPS.length; i++) {
+    var n = nextDue(LOOPS[i]);
+    if (n) nds[LOOPS[i].id] = n;
   }
-  h+='</tr></thead><tbody>';
 
-  for(var li=0;li<LOOPS.length;li++){
-    var lp=LOOPS[li],st=calcStr(lp);
-    h+='<tr><td class="task-cell" onclick="openD(\''+lp.id+'\')">';
-    h+='<span class="task-label">'+lp.icon+' '+lp.name+'</span>';
-    h+='<span class="task-freq">'+lp.freq+'</span>';
-    if(st.cur>0)h+='<span class="streak-badge">\u{1F525} '+st.cur+'</span>';
-    h+='</td>';
+  /* Build header */
+  var h = '<thead><tr>';
+  h += '<th class="task-header-cell"></th>';
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i], cls = 'date-cell';
+    if (d === t)  cls += ' is-today today-col-hdr';
+    else if (d < t) cls += ' is-past';
+    h += '<th class="' + cls + '">';
+    h += '<span class="day-name">' + dayName(d) + '</span>';
+    h += '<span class="day-num">' + dayNum(d) + '</span>';
+    h += '</th>';
+  }
+  h += '</tr></thead><tbody>';
 
-    for(var di=0;di<days.length;di++){
-      var d=days[di],isT=d===t,isF=d>t,isP=d<t;
-      var due=isDue(lp,d),chk=isChk(lp.id,d),car=isCarry(lp,d),isN=nds[lp.id]===d;
+  /* Build rows */
+  for (var li = 0; li < LOOPS.length; li++) {
+    var lp = LOOPS[li], st = calcStr(lp);
+    var tier = streakTier(st.cur);
+    var tierCls = tier >= 2 ? ' sg-t' + tier : '';
 
-      h+='<td class="g-cell'+(isT?' today-col':'')+'">';
+    h += '<tr>';
 
-      if(chk){
-        h+='<div class="cell '+(isP?'past-done':'done')+'" onclick="doChk(\''+lp.id+'\',\''+d+'\')">';
-        h+='<svg fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
-      }else if(due&&isP){
-        h+='<div class="cell missed" onclick="doChk(\''+lp.id+'\',\''+d+'\')">';
-        h+='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg></div>';
-      }else if(car){
-        h+='<div class="cell carry" onclick="doChk(\''+lp.id+'\',\''+d+'\')">';
-        h+='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--orange)" stroke-width="2.5"><path d="M12 9v4" stroke-linecap="round"/><circle cx="12" cy="16" r="0.5" fill="var(--orange)" stroke="none"/></svg></div>';
-      }else if(due&&isT){
-        h+='<div class="cell due" onclick="doChk(\''+lp.id+'\',\''+d+'\')"></div>';
-      }else if(isN&&isF){
-        h+='<div class="cell next-due"></div>';
-      }else if(due&&isF){
-        h+='<div class="cell future"></div>';
-      }else{
-        h+='<div class="cell not-due"><div class="dot"></div></div>';
-      }
-      h+='</td>';
+    /* Task label cell */
+    h += '<td class="task-cell' + tierCls + '" onclick="openD(\'' + lp.id + '\')">';
+    h += '<span class="task-icon">' + lp.icon + '</span>';
+    h += '<span class="task-label">' + lp.name + '</span>';
+    h += '<span class="task-freq">' + lp.freq + '</span>';
+    if (st.cur > 0) {
+      var badgeCls = tier >= 2 ? ' streak-t' + tier : '';
+      h += '<span class="streak-badge' + badgeCls + '">' + streakLabel(st.cur) + '</span>';
     }
-    h+='</tr>';
+    h += '</td>';
+
+    /* Day cells */
+    for (var di = 0; di < days.length; di++) {
+      var d = days[di];
+      var isT = d === t, isF = d > t, isP = d < t;
+      var due = isDue(lp, d);
+      var chk = isChk(lp.id, d);
+      var car = isCarry(lp, d);
+      var isN = nds[lp.id] === d;
+
+      h += '<td class="g-cell' + (isT ? ' today-col' : '') + '">';
+
+      if (chk) {
+        if (isP) {
+          var onStreak = st.cur > 0 ? ' on-streak' : '';
+          h += '<div class="cell past-done' + onStreak + '" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')">' + SVG_CHECK_DIM + '</div>';
+        } else {
+          h += '<div class="cell done" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')">' + SVG_CHECK + '</div>';
+        }
+      } else if (due && isP) {
+        h += '<div class="cell missed" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')">' + SVG_X + '</div>';
+      } else if (car) {
+        h += '<div class="cell carry" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')">' + SVG_WARN + '</div>';
+      } else if (due && isT) {
+        h += '<div class="cell due" onclick="doChk(\'' + lp.id + '\',\'' + d + '\')"></div>';
+      } else if (isN && isF) {
+        h += '<div class="cell next-due"></div>';
+      } else if (due && isF) {
+        h += '<div class="cell future"></div>';
+      } else {
+        h += '<div class="cell not-due"><div class="dot"></div></div>';
+      }
+
+      h += '</td>';
+    }
+    h += '</tr>';
   }
-  h+='</tbody>';
-  document.getElementById('grid').innerHTML=h;
+
+  h += '</tbody>';
+  document.getElementById('grid').innerHTML = h;
 }
 
-// --- DETAIL ---
-function openD(lid){
-  var lp;for(var i=0;i<LOOPS.length;i++)if(LOOPS[i].id===lid)lp=LOOPS[i];
-  if(!lp)return;
-  document.getElementById('shTitle').textContent=lp.icon+' '+lp.name;
-  var s=calcStr(lp),n=nextDue(lp),h='';
-  h+=sec('Goal',lp.goal)+sec('Guard Rail',lp.gr)+sec('Guard Rail Break',lp.gb);
-  h+=sec('If-Then Trigger',lp.it)+sec('Correction Rule',lp.cr);
-  if(n)h+=sec('Next Due',fmtFull(n));
-  h+=sec('Current Streak',s.cur+' in a row');
-  h+=sec('Completion Rate',s.rate+'% ('+s.tot+'/'+s.tdu+')');
-  document.getElementById('shContent').innerHTML=h;
+/* ─── Detail sheet ─── */
+function openD(lid) {
+  var lp = null;
+  for (var i = 0; i < LOOPS.length; i++) if (LOOPS[i].id === lid) lp = LOOPS[i];
+  if (!lp) return;
+  curDetailId = lid;
+
+  var s = calcStr(lp), n = nextDue(lp), h = '';
+  document.getElementById('shTitle').textContent = lp.icon + ' ' + lp.name;
+  h += sec('Goal', lp.goal);
+  h += sec('Guard Rail', lp.gr);
+  h += sec('Guard Rail Break', lp.gb);
+  h += sec('If-Then Trigger', lp.it);
+  h += sec('Correction Rule', lp.cr);
+  h += sec('Tracking Since', fmtFull(state.anchors[lp.id]));
+  if (n) h += sec('Next Due', fmtFull(n));
+  h += sec('Current Streak', s.cur + ' in a row');
+  h += sec('Completion Rate', s.rate + '% (' + s.tot + '/' + s.tdu + ' due days)');
+  document.getElementById('shContent').innerHTML = h;
   document.getElementById('overlay').classList.add('open');
 }
-function sec(l,t){return'<div class="sheet-sec"><div class="sheet-lbl">'+l+'</div><div class="sheet-txt">'+t+'</div></div>';}
-function closeD(e){if(e.target===document.getElementById('overlay'))closeDF();}
-function closeDF(){document.getElementById('overlay').classList.remove('open');}
+function sec(l, t) {
+  return '<div class="sheet-sec"><div class="sheet-lbl">' + l + '</div><div class="sheet-txt">' + t + '</div></div>';
+}
+function closeD(e) { if (e.target === document.getElementById('overlay')) closeDF(); }
+function closeDF() { document.getElementById('overlay').classList.remove('open'); }
 
-// --- STREAKS ---
-function renderStr(){
-  var t=td(),h='';
-  for(var i=0;i<LOOPS.length;i++){
-    var lp=LOOPS[i],s=calcStr(lp);
-    h+='<div class="s-card"><div class="s-title">'+lp.icon+' '+lp.name+'</div><div class="s-row">';
-    h+='<div class="s-stat"><div class="num green">'+s.cur+'</div><div class="lbl">Current</div></div>';
-    h+='<div class="s-stat"><div class="num orange">'+s.lon+'</div><div class="lbl">Best</div></div>';
-    h+='<div class="s-stat"><div class="num">'+s.rate+'%</div><div class="lbl">Rate</div></div>';
-    h+='<div class="s-stat"><div class="num">'+s.tot+'/'+s.tdu+'</div><div class="lbl">Done</div></div>';
-    h+='</div><div class="heat">';
-    for(var j=27;j>=0;j--){var d=aD(t,-j);if(!isDue(lp,d))h+='<div class="hd nd"></div>';else if(isChk(lp.id,d))h+='<div class="hd done"></div>';else h+='<div class="hd missed"></div>';}
-    h+='</div></div>';
+/* ─── Anchor modal ─── */
+function openAnchor() {
+  if (!curDetailId) return;
+  var lp = null;
+  for (var i = 0; i < LOOPS.length; i++) if (LOOPS[i].id === curDetailId) lp = LOOPS[i];
+  if (!lp) return;
+
+  anchorTargetId = curDetailId;
+  closeDF();
+
+  document.getElementById('anchorTitle').textContent = lp.icon + ' ' + lp.name + ' — Start Date';
+  document.getElementById('anchorDate').value = state.anchors[lp.id];
+  document.getElementById('anchorDate').max = td();
+  document.getElementById('anchorOverlay').classList.add('open');
+}
+function saveAnchor() {
+  var v = document.getElementById('anchorDate').value;
+  var t = td();
+  if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v <= t) {
+    state.anchors[anchorTargetId] = v;
+    save();
+    renderGrid();
   }
-  document.getElementById('streaksView').innerHTML=h;
+  closeAnchor();
+}
+function closeAnchor() {
+  document.getElementById('anchorOverlay').classList.remove('open');
+  anchorTargetId = null;
 }
 
-// --- NAV ---
-function shift(n){vOff+=n;renderGrid();}
-function goT(){vOff=0;renderGrid();}
+/* ─── Streaks view ─── */
+function renderStr() {
+  var t = td(), h = '';
+  for (var i = 0; i < LOOPS.length; i++) {
+    var lp = LOOPS[i], s = calcStr(lp);
+    h += '<div class="s-card">';
+    h += '<div class="s-title">' + lp.icon + ' ' + lp.name + '</div>';
+    h += '<div class="s-row">';
+    h += '<div class="s-stat"><div class="s-num green">' + s.cur + '</div><div class="s-lbl">Current</div></div>';
+    h += '<div class="s-stat"><div class="s-num orange">' + s.lon + '</div><div class="s-lbl">Best</div></div>';
+    h += '<div class="s-stat"><div class="s-num">' + s.rate + '%</div><div class="s-lbl">Rate</div></div>';
+    h += '<div class="s-stat"><div class="s-num">' + s.tot + '/' + s.tdu + '</div><div class="s-lbl">Done</div></div>';
+    h += '</div><div class="heat">';
+    for (var j = 27; j >= 0; j--) {
+      var d = aD(t, -j);
+      if (!isDue(lp, d))      h += '<div class="hd nd"></div>';
+      else if (isChk(lp.id, d)) h += '<div class="hd done"></div>';
+      else                    h += '<div class="hd missed"></div>';
+    }
+    h += '</div></div>';
+  }
+  document.getElementById('streaksView').innerHTML = h;
+}
 
-function showV(v){
-  document.getElementById('gridView').style.display=v==='grid'?'flex':'none';
-  document.getElementById('streaksView').style.display=v==='streaks'?'block':'none';
-  document.getElementById('dataView').style.display=v==='data'?'block':'none';
-  document.querySelectorAll('.tab-btn').forEach(function(b,i){
-    b.classList.toggle('active',(i===0&&v==='grid')||(i===1&&v==='streaks')||(i===2&&v==='data'));
+/* ─── View switching ─── */
+function shift(n) { vOff += n; renderGrid(); }
+function goT()    { vOff = 0;  renderGrid(); }
+
+function showV(v) {
+  var gv = document.getElementById('gridView');
+  var sv = document.getElementById('streaksView');
+  var dv = document.getElementById('dataView');
+
+  gv.style.display = v === 'grid' ? 'flex' : 'none';
+
+  /* Streaks and data need flex:1 to fill height when visible */
+  sv.style.display = v === 'streaks' ? 'block' : 'none';
+  sv.style.flex    = v === 'streaks' ? '1' : '';
+  dv.style.display = v === 'data' ? 'block' : 'none';
+  dv.style.flex    = v === 'data' ? '1' : '';
+
+  document.querySelectorAll('.tab-btn').forEach(function(b, i) {
+    b.classList.toggle('active',
+      (i === 0 && v === 'grid') ||
+      (i === 1 && v === 'streaks') ||
+      (i === 2 && v === 'data')
+    );
   });
-  if(v==='streaks')renderStr();
+
+  if (v === 'streaks') renderStr();
 }
 
-// --- DATA ---
-function expJSON(){var j=JSON.stringify(state,null,2);if(navigator.clipboard)navigator.clipboard.writeText(j).then(function(){alert('JSON copied!');});else prompt('Copy:',j);}
-function expCSV(){
-  var t=td(),rows=['date,task,frequency,status'];
-  for(var i=90;i>=0;i--){var d=aD(t,-i);for(var li=0;li<LOOPS.length;li++){var lp=LOOPS[li];var du=isDue(lp,d),ch=isChk(lp.id,d);rows.push(d+','+lp.name+',"'+lp.freq+'",'+(ch?'done':du?'missed':'not_due'));}}
-  var csv=rows.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(csv).then(function(){alert('CSV copied!');});else prompt('Copy:',csv);
+/* ─── Data export / import ─── */
+function expJSON() {
+  var j = JSON.stringify(state, null, 2);
+  if (navigator.clipboard) navigator.clipboard.writeText(j).then(function() { alert('JSON copied!'); });
+  else prompt('Copy:', j);
 }
-function showImp(){var t=document.getElementById('impArea'),b=document.getElementById('impBtn');t.style.display=t.style.display==='none'?'block':'none';b.style.display=b.style.display==='none'?'block':'none';}
-function doImp(){try{var d=JSON.parse(document.getElementById('impArea').value);if(d.checks&&d.anchors){state=d;save();renderGrid();alert('Done!');}else alert('Invalid.');}catch(e){alert('Error:'+e.message);}}
-function doReset(){if(confirm('Delete ALL history?')&&confirm('Sure?')){state=fresh();save();vOff=0;renderGrid();renderStr();}}
+function expCSV() {
+  var t = td(), rows = ['date,task,frequency,status'];
+  for (var i = 90; i >= 0; i--) {
+    var d = aD(t, -i);
+    for (var li = 0; li < LOOPS.length; li++) {
+      var lp = LOOPS[li];
+      var du = isDue(lp, d), ch = isChk(lp.id, d);
+      rows.push(d + ',' + lp.name + ',"' + lp.freq + '",' + (ch ? 'done' : du ? 'missed' : 'not_due'));
+    }
+  }
+  var csv = rows.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(csv).then(function() { alert('CSV copied!'); });
+  else prompt('Copy:', csv);
+}
+function showImp() {
+  var ta = document.getElementById('impArea');
+  var btn = document.getElementById('impBtn');
+  ta.style.display  = ta.style.display  === 'none' ? 'block' : 'none';
+  btn.style.display = btn.style.display === 'none' ? 'block' : 'none';
+}
+function doImp() {
+  try {
+    var d = JSON.parse(document.getElementById('impArea').value);
+    if (d.checks && d.anchors) { state = d; save(); renderGrid(); alert('Imported!'); }
+    else alert('Invalid backup file.');
+  } catch(e) { alert('Parse error: ' + e.message); }
+}
+function doReset() {
+  if (confirm('Delete ALL data and restart setup?') && confirm('Are you sure? This cannot be undone.')) {
+    localStorage.removeItem(SK);
+    state = freshState();
+    vOff = 0;
+    showSetup();
+  }
+}
 
-// --- INIT ---
-state=load();
-document.getElementById('todayLabel').textContent=fmtFull(td());
-renderGrid();
+/* ─── iOS Install Banner ─── */
+function initBanner() {
+  // Only show on iOS Safari, not already installed as standalone
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isStandalone = ('standalone' in navigator) && navigator.standalone;
+  var dismissed = localStorage.getItem('ac_banner_dismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    setTimeout(function() {
+      document.getElementById('iosBanner').classList.add('visible');
+    }, 1800);
+  }
+}
+function dismissBanner() {
+  document.getElementById('iosBanner').classList.remove('visible');
+  localStorage.setItem('ac_banner_dismissed', '1');
+}
+
+/* ─── Init ─── */
+var loaded = loadState();
+state = loaded || freshState();
+
+document.getElementById('todayLabel').textContent = fmtFull(td());
+
+initBanner();
+
+if (!state.setupDone) {
+  showSetup();
+} else {
+  renderGrid();
+}
 </script>
 </body>
 </html>
